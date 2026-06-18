@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rentanulook · Dashboard</title>
+<style>
+  :root {
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --purple-mid: #CECBF6;
+    --purple-dark: #3C3489;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-mid: #9FE1CB;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-mid: #FAC775;
+    --gray-100: #F1EFE8;
+    --gray-200: #D3D1C7;
+    --gray-400: #888780;
+    --gray-600: #5F5E5A;
+    --gray-900: #2C2C2A;
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --border: #E8E6DF;
+    --text: #1A1A18;
+    --text-2: #5F5E5A;
+    --text-3: #888780;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18181A;
+      --surface: #222224;
+      --border: #333330;
+      --text: #F0EEE8;
+      --text-2: #A0A09A;
+      --text-3: #666660;
+      --gray-100: #2C2C2A;
+      --purple-light: #26215C;
+      --teal-light: #04342C;
+      --amber-light: #412402;
+      --coral-light: #4A1B0C;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .main { flex: 1; padding: 2rem; overflow-y: auto; max-width: 900px; }
+  
+  /* Sidebar */
+  .logo { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; padding: 0 8px 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .logo span { color: var(--purple); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; color: var(--text-2); font-size: 13px; font-weight: 500; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--gray-100); color: var(--text); }
+  .nav-item.active { background: var(--purple-light); color: var(--purple-dark); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-3); padding: 12px 10px 4px; text-transform: uppercase; }
+  
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+  .page-sub { font-size: 13px; color: var(--text-3); margin-bottom: 1.75rem; }
+  
+  /* Metric cards */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.75rem; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .metric-label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  .metric-value { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  .metric-up { color: var(--teal); font-size: 11px; margin-top: 4px; }
+  
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .card-title { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); }
+  
+  /* Dress performance */
+  .dress-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .dress-row:last-child { border-bottom: none; }
+  .dress-rank { font-size: 11px; color: var(--text-3); width: 18px; flex-shrink: 0; font-weight: 600; }
+  .dress-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dress-name { font-size: 13px; color: var(--text); flex: 1; font-weight: 500; }
+  .dress-tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: var(--purple-light); color: var(--purple-dark); font-weight: 600; margin-left: 6px; }
+  .dress-bar-wrap { width: 90px; height: 5px; background: var(--gray-100); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .dress-bar { height: 100%; border-radius: 3px; }
+  .dress-count { font-size: 13px; font-weight: 600; color: var(--text); min-width: 22px; text-align: right; flex-shrink: 0; }
+  .dress-rev { font-size: 12px; color: var(--text-3); min-width: 52px; text-align: right; flex-shrink: 0; }
+  
+  /* Calendar */
+  .cal-grid { overflow-x: auto; }
+  .cal-header-row { display: grid; grid-template-columns: 140px repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
+  .cal-day-head { font-size: 11px; color: var(--text-3); text-align: center; padding: 4px 0; font-weight: 600; }
+  .cal-row { display: grid; grid-template-columns: 140px repeat(7, 1fr); gap: 3px; margin-bottom: 3px; align-items: center; }
+  .cal-name { font-size: 12px; color: var(--text-2); padding-right: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-cell { height: 30px; border-radius: 6px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.1s; font-weight: 500; }
+  .cal-cell.rented { background: var(--purple-mid); color: var(--purple-dark); }
+  .cal-cell.available { background: var(--gray-100); color: var(--text-3); }
+  .cal-cell:hover { opacity: 0.75; }
+  .cal-legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-3); margin-bottom: 1rem; }
+  .cal-legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  
+  /* Revenue */
+  .rev-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .rev-row:last-child { border-bottom: none; }
+  .rev-month { font-size: 13px; color: var(--text-2); width: 36px; flex-shrink: 0; font-weight: 600; }
+  .rev-bar-wrap { flex: 1; height: 7px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .rev-bar { height: 100%; border-radius: 4px; background: var(--teal); }
+  .rev-amount { font-size: 13px; font-weight: 600; color: var(--text); min-width: 64px; text-align: right; flex-shrink: 0; }
+  .rev-count { font-size: 11px; color: var(--text-3); min-width: 52px; text-align: right; flex-shrink: 0; }
+  
+  /* Customers */
+  .customer-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .customer-row:last-child { border-bottom: none; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .customer-info { flex: 1; min-width: 0; }
+  .customer-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .customer-meta { font-size: 11px; color: var(--text-3); }
+  .loyalty-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+  .badge-gold { background: var(--amber-light); color: var(--amber); }
+  .badge-silver { background: var(--gray-100); color: var(--gray-600); }
+  .badge-bronze { background: var(--coral-light); color: var(--coral); }
+  .badge-new { background: var(--teal-light); color: var(--teal); }
+  .customer-rentals { font-size: 13px; font-weight: 600; color: var(--text); min-width: 20px; text-align: right; flex-shrink: 0; }
+  
+  /* Add rental form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+  .form-input { padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--purple); }
+  .form-select { padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
+  
+  /* Buttons */
+  .btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s; font-family: inherit; }
+  .btn-primary { background: var(--purple); color: white; border-color: var(--purple); }
+  .btn-primary:hover { background: var(--purple-dark); border-color: var(--purple-dark); }
+  .btn-ghost { background: transparent; color: var(--text-2); }
+  .btn-ghost:hover { background: var(--gray-100); }
+  .btn-danger { background: transparent; color: #E24B4A; border-color: #F09595; }
+  .btn-danger:hover { background: #FCEBEB; }
+  
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--gray-900); color: white; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  
+  /* Empty state */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-3); }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-2); margin-bottom: 4px; }
+  
+  /* Import */
+  .import-zone { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; cursor: pointer; transition: all 0.15s; margin-bottom: 1rem; }
+  .import-zone:hover { border-color: var(--purple); background: var(--purple-light); }
+  .import-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .import-sub { font-size: 13px; color: var(--text-3); }
+  
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); padding: 1.75rem; width: 440px; max-width: 95vw; border: 1px solid var(--border); }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 1.25rem; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+  
+  /* Week nav */
+  .week-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+  .week-label { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+  .week-btn { padding: 5px 12px; font-size: 12px; }
+  
+  /* Responsive */
+  @media (max-width: 680px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; padding: 0.75rem; }
+    .logo, .nav-section { display: none; }
+    .main { padding: 1rem; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">renta<span>nulook</span></div>
+    <div class="nav-section">Overview</div>
+    <button class="nav-item active" onclick="showSection('performance', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Dress performance
+    </button>
+    <button class="nav-item" onclick="showSection('calendar', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Availability
+    </button>
+    <button class="nav-item" onclick="showSection('revenue', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Revenue
+    </button>
+    <button class="nav-item" onclick="showSection('customers', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Customers
+    </button>
+    <div class="nav-section">Manage</div>
+    <button class="nav-item" onclick="showSection('add', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add rental
+    </button>
+    <button class="nav-item" onclick="showSection('dresses', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg>
+      My dresses
+    </button>
+    <button class="nav-item" onclick="showSection('import', this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Import data
+    </button>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Performance -->
+    <div id="sec-performance" class="section active">
+      <div class="page-title">Dress performance</div>
+      <div class="page-sub" id="perf-sub">Loading...</div>
+      <div class="metrics" id="perf-metrics"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Top performers</div>
+          <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:12px; padding:5px 12px;">Export CSV</button>
+        </div>
+        <div id="top-dresses"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Least rented — consider retiring</div>
+        </div>
+        <div id="low-dresses"></div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div id="sec-calendar" class="section">
+      <div class="page-title">Availability calendar</div>
+      <div class="page-sub">See what's out and what's free — answer DMs instantly</div>
+      <div class="week-nav">
+        <button class="btn btn-ghost week-btn" onclick="changeWeek(-1)">← Prev</button>
+        <div class="week-label" id="week-label"></div>
+        <button class="btn btn-ghost week-btn" onclick="changeWeek(1)">Next →</button>
+      </div>
+      <div class="card">
+        <div class="cal-legend">
+          <span><span class="legend-dot" style="background:var(--purple-mid)"></span>Rented</span>
+          <span><span class="legend-dot" style="background:var(--gray-100); border:1px solid var(--border)"></span>Available</span>
+        </div>
+        <div class="cal-grid">
+          <div id="cal-head" class="cal-header-row"></div>
+          <div id="cal-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue -->
+    <div id="sec-revenue" class="section">
+      <div class="page-title">Revenue</div>
+      <div class="page-sub" id="rev-sub">Loading...</div>
+      <div class="metrics" id="rev-metrics"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Monthly revenue</div></div>
+        <div id="rev-bars"></div>
+      </div>
+    </div>
+
+    <!-- Customers -->
+    <div id="sec-customers" class="section">
+      <div class="page-title">Customers</div>
+      <div class="page-sub">Loyalty tiers based on rental history</div>
+      <div class="metrics" id="cust-metrics"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All customers</div>
+          <div style="font-size:11px; color:var(--text-3); display:flex; gap:12px;">
+            <span style="color:var(--amber)">● Gold 5+</span>
+            <span style="color:var(--gray-400)">● Silver 3–4</span>
+            <span style="color:var(--coral)">● Bronze 1–2</span>
+          </div>
+        </div>
+        <div id="customer-list"></div>
+      </div>
+    </div>
+
+    <!-- Add Rental -->
+    <div id="sec-add" class="section">
+      <div class="page-title">Add a rental</div>
+      <div class="page-sub">Log a new rental as soon as you confirm it in DMs</div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Customer name</label>
+            <input class="form-input" id="f-name" placeholder="e.g. Sophie Anderson">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Instagram handle</label>
+            <input class="form-input" id="f-handle" placeholder="@username">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Dress</label>
+            <select class="form-select" id="f-dress"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rental date (from)</label>
+            <input class="form-input" type="date" id="f-from">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Return date</label>
+            <input class="form-input" type="date" id="f-to">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price ($)</label>
+            <input class="form-input" type="number" id="f-price" placeholder="60">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="f-status">
+              <option value="confirmed">Confirmed</option>
+              <option value="out">Currently out</option>
+              <option value="returned">Returned</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Notes (optional)</label>
+            <input class="form-input" id="f-notes" placeholder="e.g. needs dry cleaning, deposit paid">
+          </div>
+          <div class="form-group full">
+            <button class="btn btn-primary" onclick="addRental()">Save rental</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Dresses -->
+    <div id="sec-dresses" class="section">
+      <div class="page-title">My dresses</div>
+      <div class="page-sub" id="dress-sub">Loading...</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Inventory</div>
+          <button class="btn btn-primary" style="font-size:12px; padding:6px 14px;" onclick="openAddDressModal()">+ Add dress</button>
+        </div>
+        <div id="dress-inventory"></div>
+      </div>
+    </div>
+
+    <!-- Import -->
+    <div id="sec-import" class="section">
+      <div class="page-title">Import data</div>
+      <div class="page-sub">Load your existing rental history from Google Sheets</div>
+      <div class="import-zone" onclick="document.getElementById('csv-upload').click()">
+        <div style="font-size:32px; margin-bottom:8px;">📊</div>
+        <div class="import-title">Upload Google Sheets CSV</div>
+        <div class="import-sub">Export your sheet as CSV → File → Download → CSV, then upload here</div>
+        <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="importCSV(this)">
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Expected CSV columns</div></div>
+        <div style="font-size:13px; color:var(--text-2); line-height:2;">
+          Your CSV should have these columns (column names can vary — you'll map them after upload):<br>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Customer Name</code>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Instagram Handle</code>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Dress</code>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Date From</code>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Date To</code>
+          <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">Price</code>
+        </div>
+      </div>
+      <div class="card" style="border-color: #E24B4A;">
+        <div class="card-header"><div class="card-title" style="color:#E24B4A;">Danger zone</div></div>
+        <div style="font-size:13px; color:var(--text-2); margin-bottom:1rem;">Clear all data and start fresh. This cannot be undone.</div>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear all data</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add Dress Modal -->
+<div class="modal-overlay" id="add-dress-modal">
+  <div class="modal">
+    <div class="modal-title">Add a dress to your inventory</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Dress name</label>
+        <input class="form-input" id="md-name" placeholder="e.g. Black slip dress">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID / code</label>
+        <input class="form-input" id="md-id" placeholder="BLK-001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="md-cat">
+          <option>Formal / gala</option>
+          <option>Cocktail</option>
+          <option>Casual / event</option>
+          <option>Mini</option>
+          <option>Maxi</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Default price ($)</label>
+        <input class="form-input" type="number" id="md-price" placeholder="60">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <input class="form-input" id="md-color" placeholder="e.g. Black">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDress()">Add dress</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA LAYER ───────────────────────────────────────────
+const DB = {
+  get(key) { try { return JSON.parse(localStorage.getItem('rnu_' + key) || 'null'); } catch { return null; } },
+  set(key, val) { localStorage.setItem('rnu_' + key, JSON.stringify(val)); },
+  init() {
+    if (!this.get('dresses')) {
+      this.set('dresses', [
+        { id: 'BLK-001', name: 'Black slip dress', category: 'Cocktail', price: 60, color: 'Black' },
+        { id: 'RED-002', name: 'Red cowl neck gown', category: 'Formal / gala', price: 70, color: 'Red' },
+        { id: 'GLD-003', name: 'Gold sequin mini', category: 'Mini', price: 70, color: 'Gold' },
+        { id: 'SGN-004', name: 'Sage green midi', category: 'Cocktail', price: 60, color: 'Sage' },
+        { id: 'WHT-005', name: 'White lace formal', category: 'Formal / gala', price: 70, color: 'White' },
+        { id: 'BLU-006', name: 'Blue satin maxi', category: 'Maxi', price: 70, color: 'Blue' },
+        { id: 'PNK-007', name: 'Pink ruched mini', category: 'Mini', price: 60, color: 'Pink' },
+        { id: 'EMR-008', name: 'Emerald wrap dress', category: 'Cocktail', price: 70, color: 'Emerald' },
+        { id: 'YLW-009', name: 'Yellow floral maxi', category: 'Maxi', price: 60, color: 'Yellow' },
+        { id: 'BGE-010', name: 'Beige bodycon', category: 'Cocktail', price: 55, color: 'Beige' },
+        { id: 'PRP-011', name: 'Purple halter', category: 'Cocktail', price: 55, color: 'Purple' },
+      ]);
+    }
+    if (!this.get('rentals')) {
+      const today = new Date();
+      const d = (offset, len=2) => { const dt=new Date(today); dt.setDate(dt.getDate()+offset); return dt.toISOString().split('T')[0]; };
+      this.set('rentals', [
+        { id: 'R001', customer: 'Mia Chen', handle: '@mia.c', dress: 'BLK-001', from: d(-20), to: d(-18), price: 60, status: 'returned' },
+        { id: 'R002', customer: 'Sophie A.', handle: '@sophiea', dress: 'RED-002', from: d(-15), to: d(-13), price: 70, status: 'returned' },
+        { id: 'R003', customer: 'Zara K.', handle: '@zarak', dress: 'GLD-003', from: d(-10), to: d(-8), price: 70, status: 'returned' },
+        { id: 'R004', customer: 'Mia Chen', handle: '@mia.c', dress: 'SGN-004', from: d(-7), to: d(-5), price: 60, status: 'returned' },
+        { id: 'R005', customer: 'Emma Liu', handle: '@emmaliu', dress: 'WHT-005', from: d(-5), to: d(-3), price: 70, status: 'returned' },
+        { id: 'R006', customer: 'Sophie A.', handle: '@sophiea', dress: 'BLK-001', from: d(-3), to: d(-1), price: 60, status: 'returned' },
+        { id: 'R007', customer: 'Priya N.', handle: '@priyan', dress: 'BLU-006', from: d(0), to: d(2), price: 70, status: 'out' },
+        { id: 'R008', customer: 'Mia Chen', handle: '@mia.c', dress: 'PNK-007', from: d(1), to: d(3), price: 60, status: 'confirmed' },
+        { id: 'R009', customer: 'Lily Park', handle: '@lilyp', dress: 'EMR-008', from: d(2), to: d(4), price: 70, status: 'confirmed' },
+        { id: 'R010', customer: 'Zara K.', handle: '@zarak', dress: 'RED-002', from: d(-30), to: d(-28), price: 70, status: 'returned' },
+        { id: 'R011', customer: 'Sophie A.', handle: '@sophiea', dress: 'GLD-003', from: d(-25), to: d(-23), price: 70, status: 'returned' },
+        { id: 'R012', customer: 'Emma Liu', handle: '@emmaliu', dress: 'BLK-001', from: d(-45), to: d(-43), price: 60, status: 'returned' },
+      ]);
+    }
+  }
+};
+DB.init();
+
+// ─── HELPERS ──────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+  render();
+}
+const COLORS = ['#7F77DD','#1D9E75','#D85A30','#BA7517','#5DCAA5','#F0997B','#378ADD','#639922','#D4537E'];
+function dressColor(idx) { return COLORS[idx % COLORS.length]; }
+function initials(name) { return name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+function fmt$(n) { return '$' + Number(n).toLocaleString(); }
+function getDresses() { return DB.get('dresses') || []; }
+function getRentals() { return DB.get('rentals') || []; }
+
+// ─── PERFORMANCE ──────────────────────────────────────────
+function renderPerformance() {
+  const rentals = getRentals();
+  const dresses = getDresses();
+  const counts = {};
+  const revs = {};
+  rentals.forEach(r => {
+    counts[r.dress] = (counts[r.dress] || 0) + 1;
+    revs[r.dress] = (revs[r.dress] || 0) + Number(r.price || 0);
+  });
+  const sorted = dresses.map((d,i) => ({ ...d, rentals: counts[d.id]||0, rev: revs[d.id]||0, idx: i }))
+    .sort((a,b) => b.rentals - a.rentals);
+  const total = rentals.length;
+  const totalRev = rentals.reduce((s,r) => s + Number(r.price||0), 0);
+  const active = sorted.filter(d => d.rentals > 0).length;
+
+  document.getElementById('perf-sub').textContent = `${dresses.length} dresses · ${total} total rentals · ${fmt$(totalRev)} earned`;
+  document.getElementById('perf-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total rentals</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Total revenue</div><div class="metric-value">${fmt$(totalRev)}</div></div>
+    <div class="metric"><div class="metric-label">Active dresses</div><div class="metric-value">${active}</div></div>
+    <div class="metric"><div class="metric-label">Avg per dress</div><div class="metric-value">${dresses.length ? fmt$(Math.round(totalRev/dresses.length)) : '$0'}</div></div>
+  `;
+  const maxR = sorted[0]?.rentals || 1;
+  const top = sorted.filter(d => d.rentals > 0);
+  const low = sorted.filter(d => d.rentals === 0);
+  document.getElementById('top-dresses').innerHTML = top.length ? top.map((d,i) => `
+    <div class="dress-row">
+      <span class="dress-rank">${i+1}</span>
+      <span class="dress-color" style="background:${dressColor(d.idx)}"></span>
+      <span class="dress-name">${d.name}${i===0?'<span class="dress-tag">Top</span>':''}</span>
+      <div class="dress-bar-wrap"><div class="dress-bar" style="width:${Math.round(d.rentals/maxR*100)}%;background:${dressColor(d.idx)}"></div></div>
+      <span class="dress-count">${d.rentals}</span>
+      <span class="dress-rev">${fmt$(d.rev)}</span>
+    </div>`).join('') : '<div class="empty"><div class="empty-title">No rentals yet</div><div>Add your first rental to see performance data</div></div>';
+  document.getElementById('low-dresses').innerHTML = low.length ? low.map((d,i) => `
+    <div class="dress-row">
+      <span class="dress-rank">${i+1}</span>
+      <span class="dress-color" style="background:var(--gray-200)"></span>
+      <span class="dress-name" style="color:var(--text-3)">${d.name}</span>
+      <div class="dress-bar-wrap"><div class="dress-bar" style="width:2%;background:var(--gray-200)"></div></div>
+      <span class="dress-count" style="color:var(--text-3)">0</span>
+      <span class="dress-rev">—</span>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text-3);padding:8px 0;">All dresses have been rented 🎉</div>';
+}
+
+// ─── CALENDAR ─────────────────────────────────────────────
+let weekOffset = 0;
+function changeWeek(dir) { weekOffset += dir; renderCalendar(); }
+function renderCalendar() {
+  const rentals = getRentals();
+  const dresses = getDresses();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - today.getDay() + 1 + weekOffset * 7);
+  const days = Array.from({length:7}, (_,i) => { const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  document.getElementById('week-label').textContent = `Week of ${monday.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+  document.getElementById('cal-head').innerHTML = `<div></div>` + days.map((d,i) => {
+    const isToday = d.toDateString() === today.toDateString();
+    return `<div class="cal-day-head" style="${isToday?'color:var(--purple);':''}">
+      ${dayNames[i]}<br><span style="font-size:13px;font-weight:700;color:${isToday?'var(--purple)':'var(--text)'}">${d.getDate()}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('cal-body').innerHTML = dresses.map(dress => {
+    const cells = days.map(day => {
+      const ds = day.toISOString().split('T')[0];
+      const r = rentals.find(r => r.dress === dress.id && r.from <= ds && r.to >= ds);
+      return `<div class="cal-cell ${r?'rented':'available'}" title="${r ? r.customer + ' · ' + r.handle : 'Available'}">${r ? '✓' : ''}</div>`;
+    }).join('');
+    return `<div class="cal-row"><div class="cal-name" title="${dress.name}">${dress.name}</div>${cells}</div>`;
+  }).join('');
+}
+
+// ─── REVENUE ──────────────────────────────────────────────
+function renderRevenue() {
+  const rentals = getRentals();
+  const byMonth = {};
+  const countByMonth = {};
+  rentals.forEach(r => {
+    if (!r.from) return;
+    const key = r.from.substring(0,7);
+    byMonth[key] = (byMonth[key]||0) + Number(r.price||0);
+    countByMonth[key] = (countByMonth[key]||0) + 1;
+  });
+  const keys = Object.keys(byMonth).sort();
+  const total = Object.values(byMonth).reduce((s,v)=>s+v,0);
+  const totalRentals = rentals.length;
+  const avg = totalRentals ? Math.round(total/totalRentals) : 0;
+  document.getElementById('rev-sub').textContent = keys.length ? `${keys.length} months of data` : 'No data yet';
+  document.getElementById('rev-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">All time revenue</div><div class="metric-value">${fmt$(total)}</div></div>
+    <div class="metric"><div class="metric-label">Avg per rental</div><div class="metric-value">${fmt$(avg)}</div></div>
+    <div class="metric"><div class="metric-label">Best month</div><div class="metric-value">${keys.length ? fmt$(Math.max(...Object.values(byMonth))) : '—'}</div></div>
+  `;
+  const maxR = Math.max(...Object.values(byMonth), 1);
+  document.getElementById('rev-bars').innerHTML = keys.length ? keys.map(k => {
+    const label = new Date(k+'-01').toLocaleDateString('en-US',{month:'short', year:'2-digit'});
+    return `<div class="rev-row">
+      <span class="rev-month">${label}</span>
+      <div class="rev-bar-wrap"><div class="rev-bar" style="width:${Math.round(byMonth[k]/maxR*100)}%"></div></div>
+      <span class="rev-amount">${fmt$(byMonth[k])}</span>
+      <span class="rev-count">${countByMonth[k]} rentals</span>
+    </div>`;
+  }).join('') : '<div class="empty"><div class="empty-title">No revenue data yet</div></div>';
+}
+
+// ─── CUSTOMERS ────────────────────────────────────────────
+function renderCustomers() {
+  const rentals = getRentals();
+  const map = {};
+  rentals.forEach(r => {
+    const key = r.handle || r.customer;
+    if (!map[key]) map[key] = { name: r.customer, handle: r.handle, count: 0, spent: 0 };
+    map[key].count++;
+    map[key].spent += Number(r.price||0);
+  });
+  const customers = Object.values(map).sort((a,b) => b.count - a.count);
+  const gold = customers.filter(c=>c.count>=5).length;
+  const silver = customers.filter(c=>c.count>=3&&c.count<5).length;
+  document.getElementById('cust-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total customers</div><div class="metric-value">${customers.length}</div></div>
+    <div class="metric"><div class="metric-label">Gold members</div><div class="metric-value">${gold}</div><div class="metric-sub">5+ rentals</div></div>
+    <div class="metric"><div class="metric-label">Silver members</div><div class="metric-value">${silver}</div><div class="metric-sub">3–4 rentals</div></div>
+    <div class="metric"><div class="metric-label">Avg spent</div><div class="metric-value">${customers.length ? fmt$(Math.round(customers.reduce((s,c)=>s+c.spent,0)/customers.length)) : '—'}</div></div>
+  `;
+  const tierClass = c => c.count>=5?'badge-gold':c.count>=3?'badge-silver':c.count>=1?'badge-bronze':'badge-new';
+  const tierLabel = c => c.count>=5?'Gold':c.count>=3?'Silver':c.count>=1?'Bronze':'New';
+  const avatarBg = c => c.count>=5?'#FAC775':c.count>=3?'#D3D1C7':c.count>=1?'#F5C4B3':'#9FE1CB';
+  const avatarFg = c => c.count>=5?'#633806':c.count>=3?'#444441':c.count>=1?'#711B13':'#085041';
+  document.getElementById('customer-list').innerHTML = customers.length ? customers.map(c => `
+    <div class="customer-row">
+      <div class="avatar" style="background:${avatarBg(c)};color:${avatarFg(c)}">${initials(c.name)}</div>
+      <div class="customer-info">
+        <div class="customer-name">${c.name}</div>
+        <div class="customer-meta">${c.handle || '—'} · ${fmt$(c.spent)} spent</div>
+      </div>
+      <span class="loyalty-badge ${tierClass(c)}">${tierLabel(c)}</span>
+      <span class="customer-rentals">${c.count}</span>
+    </div>`).join('') : '<div class="empty"><div class="empty-title">No customers yet</div></div>';
+}
+
+// ─── DRESS INVENTORY ──────────────────────────────────────
+function renderDresses() {
+  const dresses = getDresses();
+  const rentals = getRentals();
+  const counts = {};
+  rentals.forEach(r => { counts[r.dress] = (counts[r.dress]||0)+1; });
+  document.getElementById('dress-sub').textContent = `${dresses.length} dresses in inventory`;
+  document.getElementById('dress-inventory').innerHTML = dresses.map((d,i) => `
+    <div class="dress-row">
+      <span class="dress-color" style="background:${dressColor(i)}"></span>
+      <span class="dress-name">${d.name} <span style="font-size:11px;color:var(--text-3)">${d.id}</span></span>
+      <span style="font-size:12px;color:var(--text-3);min-width:80px;">${d.category}</span>
+      <span style="font-size:13px;color:var(--text-2);min-width:36px;">${fmt$(d.price)}</span>
+      <span style="font-size:12px;color:var(--text-3);min-width:50px;">${counts[d.id]||0} rentals</span>
+      <button onclick="deleteDress('${d.id}')" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;" title="Remove dress">×</button>
+    </div>`).join('');
+}
+
+// ─── ADD RENTAL ───────────────────────────────────────────
+function populateDressSelect() {
+  const dresses = getDresses();
+  document.getElementById('f-dress').innerHTML = dresses.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+}
+function addRental() {
+  const name = document.getElementById('f-name').value.trim();
+  const dress = document.getElementById('f-dress').value;
+  const from = document.getElementById('f-from').value;
+  const to = document.getElementById('f-to').value;
+  const price = document.getElementById('f-price').value;
+  if (!name || !dress || !from) { toast('Please fill in customer, dress, and start date'); return; }
+  const rentals = getRentals();
+  const rental = {
+    id: 'R' + Date.now(),
+    customer: name,
+    handle: document.getElementById('f-handle').value.trim(),
+    dress, from, to, price: Number(price)||0,
+    status: document.getElementById('f-status').value,
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  rentals.push(rental);
+  DB.set('rentals', rentals);
+  ['f-name','f-handle','f-from','f-to','f-price','f-notes'].forEach(id => document.getElementById(id).value = '');
+  toast('Rental saved ✓');
+}
+
+// ─── ADD DRESS ────────────────────────────────────────────
+function openAddDressModal() { document.getElementById('add-dress-modal').classList.add('open'); }
+function closeModal() { document.getElementById('add-dress-modal').classList.remove('open'); }
+function saveDress() {
+  const name = document.getElementById('md-name').value.trim();
+  if (!name) { toast('Please enter a dress name'); return; }
+  const dresses = getDresses();
+  dresses.push({
+    id: document.getElementById('md-id').value.trim() || 'D' + Date.now(),
+    name,
+    category: document.getElementById('md-cat').value,
+    price: Number(document.getElementById('md-price').value)||60,
+    color: document.getElementById('md-color').value.trim()
+  });
+  DB.set('dresses', dresses);
+  closeModal();
+  ['md-name','md-id','md-price','md-color'].forEach(id => document.getElementById(id).value='');
+  toast('Dress added ✓');
+  render();
+}
+function deleteDress(id) {
+  if (!confirm('Remove this dress from inventory?')) return;
+  DB.set('dresses', getDresses().filter(d => d.id !== id));
+  toast('Dress removed');
+  render();
+}
+
+// ─── IMPORT CSV ───────────────────────────────────────────
+function importCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l=>l.trim());
+    const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/['"]/g,''));
+    const find = (...opts) => { for(const o of opts) { const i=headers.findIndex(h=>h.includes(o)); if(i>=0)return i; } return -1; };
+    const ci = { name:find('customer','name'), handle:find('handle','instagram','ig'), dress:find('dress','item'), from:find('from','start','date'), to:find('to','end','return'), price:find('price','amount','cost') };
+    const rentals = getRentals();
+    let added = 0;
+    lines.slice(1).forEach(line => {
+      const cols = line.split(',').map(c=>c.trim().replace(/^["']|["']$/g,''));
+      if (!cols[ci.name] && !cols[ci.dress]) return;
+      rentals.push({ id:'R'+Date.now()+Math.random(), customer:cols[ci.name]||'', handle:cols[ci.handle]||'', dress:cols[ci.dress]||'', from:cols[ci.from]||'', to:cols[ci.to]||'', price:Number(cols[ci.price])||0, status:'returned' });
+      added++;
+    });
+    DB.set('rentals', rentals);
+    toast(`Imported ${added} rentals ✓`);
+    render();
+  };
+  reader.readAsText(file);
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────
+function exportCSV() {
+  const rentals = getRentals();
+  const dresses = getDresses();
+  const dressMap = Object.fromEntries(dresses.map(d=>[d.id,d.name]));
+  const rows = [['Customer','Handle','Dress','Date From','Date To','Price','Status','Notes']];
+  rentals.forEach(r => rows.push([r.customer,r.handle,dressMap[r.dress]||r.dress,r.from,r.to,r.price,r.status,r.notes||'']));
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'rentanulook-export.csv';
+  a.click();
+  toast('Exported ✓');
+}
+
+// ─── CLEAR DATA ───────────────────────────────────────────
+function clearAllData() {
+  if (!confirm('Are you sure? This will delete all rentals and dresses. This cannot be undone.')) return;
+  ['dresses','rentals'].forEach(k => localStorage.removeItem('rnu_'+k));
+  DB.init();
+  toast('Data cleared. Sample data loaded.');
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function render() {
+  renderPerformance();
+  renderCalendar();
+  renderRevenue();
+  renderCustomers();
+  renderDresses();
+  populateDressSelect();
+}
+render();
+</script>
+</body>
+</html>
